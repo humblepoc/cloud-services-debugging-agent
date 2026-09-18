@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devops-agent"
+version = "0.1.5"
+description = "Generic LLM-agnostic AI agent framework with DevOps incident debugging flavor"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "boto3>=1.35",
+    "rich>=13.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pyinstaller>=6.0",
+]
+
+[project.scripts]
+agent = "agent.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

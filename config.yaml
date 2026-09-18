@@ -1,0 +1,87 @@
+# Example configuration for the cloud services debugging agent.
+#
+# This is a minimal, illustrative config. Replace the placeholder service,
+# account IDs, ARNs, and resource names with your own. Every value here can be
+# overridden by environment variables (which win), e.g. AGENT_LLM_PROVIDER,
+# AGENT_API_KEY, AGENT_BASE_URL.
+
+llm:
+  # One of: custom | anthropic | openai | gemini | copilot
+  provider: custom
+  model: ""            # empty -> per-provider default
+  base_url: ""         # empty -> per-provider default; set your gateway URL here
+  # Set the key via AGENT_API_KEY / AGENT_CUSTOM_API_KEY env var instead of committing it.
+  api_key: ""
+  custom_api_key: ""
+  temperature: 0.0
+  max_tokens: 4096
+
+# AWS accounts/roles the agent assumes per environment + region.
+environments:
+  integ:
+    regions:
+      - name: us-east-1
+        account_id: "111111111111"
+        role_name: "debugging-agent-role"
+  prod:
+    regions:
+      - name: us-east-1
+        account_id: "222222222222"
+        role_name: "debugging-agent-role"
+
+# The central logging account (Athena query results, etc.).
+logging_account:
+  account_id: "333333333333"
+  role_name: "debugging-agent-role"
+  regions:
+    us-east-1:
+      athena:
+        workgroup: primary
+        output_location: s3://my-athena-query-results-us-east-1/
+
+# Service catalog. Add one entry per service. See README.md for the full schema.
+services:
+  my-service:
+    description: Example service description
+    architecture: "Request -> ALB -> Target Group -> K8s pod -> RDS (mydb-cluster)"
+    tags: [app]
+    email_recipients:
+      - team-lead@example.com
+    cloudwatch:
+      log_groups: []
+      regions:
+        us-east-1:
+          log_groups:
+            - /aws/lambda/my-lambda-function
+    athena:
+      integ:
+        database: 111111111111-integ-us-east-1-app-logging-db
+        table: my-service-logs
+      prod:
+        database: 222222222222-prod-us-east-1-app-logging-db
+        table: my-service-logs
+    metrics:
+      lambda_functions:
+        - my-lambda-function
+      environments:
+        prod:
+          regions:
+            us-east-1:
+              alb:
+                load_balancer: app/k8s-myservice-abc123/deadbeef1234
+                target_groups:
+                  blue: targetgroup/k8s-myservice-blue-xyz/aabbccdd1234
+              rds_clusters:
+                - mydb-cluster-prod
+              sqs_queues:
+                - my-processing-queue
+
+# Optional: email notification settings (OAuth2 client-credentials gateway).
+# Prefer setting secrets via env vars: AGENT_NOTIFY_URL, AGENT_NOTIFY_TOKEN_URL,
+# AGENT_NOTIFY_CLIENT_ID, AGENT_NOTIFY_CLIENT_SECRET, AGENT_NOTIFY_ADMIN_EMAIL.
+email:
+  notify_url: ""
+  token_url: ""
+  client_id: ""
+  client_secret: ""
+  admin_email: ""
